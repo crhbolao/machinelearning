@@ -1,0 +1,19 @@
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.svn
+*.iml
+*.tar
+*.tar.gz
+.classpath
+.project
+.DS_Store
+
+# Package Files #
+.svn
+.idea
+.settings
+target
+job_libs/
