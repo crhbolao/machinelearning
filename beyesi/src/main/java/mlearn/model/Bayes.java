@@ -1,9 +1,12 @@
 package mlearn.model;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -16,7 +19,7 @@ import java.util.*;
  */
 public class Bayes {
 
-    protected Log LOG = LogFactory.getLog(Bayes.class);
+    protected static Log LOG = LogFactory.getLog(Bayes.class);
 
     /**
      * 模型预测
@@ -25,7 +28,7 @@ public class Bayes {
      * @param testVectors 测试集向量
      * @return
      */
-    public String modelPredict(ArrayList<ArrayList<String>> datas, ArrayList<String> testVectors) {
+    public static String modelPredict(ArrayList<ArrayList<String>> datas, ArrayList<String> testVectors) {
 
         // 如果训练集和测试集都为空，则返回空
         if (datas == null || testVectors == null) {
@@ -94,16 +97,16 @@ public class Bayes {
     /**
      * 计算在出现 key 情况下，是分类 class 1 的概率 [ P(Classify | key) ]
      *
-     * @param map      所有分类后的数据集
+     * @param trainSet      所有分类后的数据集
      * @param classify 某一特定分类
      * @param key      某一特定特征
      * @return
      */
-    public static double modelPreExecutor(Map<String, ArrayList<ArrayList<String>>> map, String classify, String key) {
-        ArrayList<ArrayList<String>> singles = map.get(classify);
+    public static double modelPreExecutor(Map<String, ArrayList<ArrayList<String>>> trainSet, String classify, String key) {
+        ArrayList<ArrayList<String>> singles = trainSet.get(classify);
         double pkc = excutorKeyInClass(singles, key); // p(key|classify)
-        double pc = excutorClass(map, classify);    // p(classify)
-        double pk = excutorKey(map, key); // p(key)
+        double pc = excutorClass(trainSet, classify);    // p(classify)
+        double pk = excutorKey(trainSet, key); // p(key)
         return pk == 0.0 ? 0.0 : pkc * pc / pk; // p(classify | key)
     }
 
@@ -181,6 +184,47 @@ public class Bayes {
             }
         }
         return totalKeyCount == 0 ? 0.0 : 1.0 * foundKeyCount / totalKeyCount;
+    }
+
+    /**
+     * 读取训练集数据
+     *
+     * @param trainPath   训练集所存放的路径
+     * @return
+     */
+    public static ArrayList<ArrayList<String>> read(String trainPath) throws Exception{
+        ArrayList<String> singleLabel = null;
+        ArrayList<ArrayList<String>> trainSet = new ArrayList<ArrayList<String>>();
+        try {
+            List<String> lines = FileUtils.readLines(new File(trainPath), "UTF-8");
+            if (lines.size() == 0){
+                LOG.info("训练数据为空" + trainPath);
+                throw new Exception("训练数据为空！");
+            }
+            for (String line : lines) {
+                String[] split = line.split(" ");
+                singleLabel = new ArrayList<String>();
+                for (String s : split) {
+                    if (StringUtils.isNotBlank(s)){
+                        singleLabel.add(s);
+                    }
+                }
+                trainSet.add(singleLabel);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return trainSet;
+    }
+
+    public static void main(String[] args) throws Exception{
+        String path = "beyesi/src/main/resources/trainData.txt";
+        ArrayList<ArrayList<String>> trainSet = Bayes.read(path);
+        ArrayList<String> testData = new ArrayList<String>();
+        testData.add("海贼王");
+        testData.add("罗杰");
+        String label = Bayes.modelPredict(trainSet, testData);
+        System.out.println(label);
     }
 
 }
